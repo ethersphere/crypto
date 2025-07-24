@@ -13,6 +13,15 @@ import (
 	"hash"
 )
 
+// StatefulHash extends hash.Hash with methods to export and import internal state
+type StatefulHash interface {
+	hash.Hash
+	// ExportState returns the internal state of the hash function
+	ExportState() []byte
+	// ImportState sets the internal state of the hash function
+	ImportState(state []byte) error
+}
+
 // New224 creates a new SHA3-224 hash.
 // Its generic security strength is 224 bits against preimage attacks,
 // and 112 bits against collision attacks.
@@ -85,6 +94,21 @@ func new512Generic() *state {
 // that uses non-standard padding. All other users should use New256 instead.
 func NewLegacyKeccak256() hash.Hash {
 	return &state{rate: rateK512, outputLen: 32, dsbyte: dsbyteKeccak}
+}
+
+// NewLegacyKeccak256WithState creates a new Keccak-256 hash with optional initial state.
+//
+// If initialState is nil, creates a new hash with default state.
+// If initialState is provided, it should be a valid state exported from ExportState().
+// Returns a StatefulHash interface that supports state export/import operations.
+func NewLegacyKeccak256WithState(initialState []byte) (StatefulHash, error) {
+	s := &state{rate: rateK512, outputLen: 32, dsbyte: dsbyteKeccak}
+	if initialState != nil {
+		if err := s.ImportState(initialState); err != nil {
+			return nil, err
+		}
+	}
+	return s, nil
 }
 
 // NewLegacyKeccak512 creates a new Keccak-512 hash.
