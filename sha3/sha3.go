@@ -242,3 +242,16 @@ func (d *state) UnmarshalBinary(b []byte) error {
 
 	return nil
 }
+
+// ExportState returns the internal state of the hash function.
+// The returned byte slice can be used with ImportState to restore the hash state.
+func (d *state) ExportState() []byte {
+	data, _ := d.MarshalBinary() // MarshalBinary never returns an error
+	return data
+}
+
+// ImportState sets the internal state of the hash function from exported state.
+// The state parameter should be a byte slice previously returned by ExportState.
+func (d *state) ImportState(state []byte) error {
+	return d.UnmarshalBinary(state)
+}
